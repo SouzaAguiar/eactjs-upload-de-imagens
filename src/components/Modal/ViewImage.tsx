@@ -22,11 +22,17 @@ export function ModalViewImage({
   return (
     <Modal isOpen={isOpen} onClose={onClose} isCentered>
       <ModalOverlay />
-      <ModalContent bg="gray.800">
+      <ModalContent
+        bg="pGray.800"
+        w="auto"
+        h="auto"
+        maxW={['300px', '500px', '900px']}
+        maxH={['350px', '450px', '600px']}
+      >
         <ModalBody>
-          <Image src={imgUrl} w="900px" h="600px" />
+          <Image src={imgUrl} w="full" />
         </ModalBody>
-        <ModalFooter>
+        <ModalFooter bg="pGray.800" borderBottomRadius="6px">
           <Link href={imgUrl} isExternal fontSize="1rem" mr="auto">
             Abrir original
           </Link>

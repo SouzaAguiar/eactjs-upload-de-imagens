@@ -21,12 +21,20 @@ interface GetImagesResponse {
   data: Image[];
 }
 
-const getImages = async ({ pageParam = 0 }): Promise<GetImagesResponse> => {
-  const resonse = await api.get(`/images?after=${pageParam}`);
-  return resonse.data;
+const getImages = async ({ pageParam = null }): Promise<GetImagesResponse> => {
+  if (pageParam) {
+    const { data } = await api.get('api/images', {
+      params: {
+        after: pageParam,
+      },
+    });
+    return data;
+  }
+  const { data } = await api.get('api/images');
+  return data;
 };
 function getNextPageParam(lastpage): GetNextPageParamFunction {
-  return lastpage.after;
+  return lastpage.after ?? null;
 }
 export default function Home(): JSX.Element {
   const {
@@ -39,9 +47,7 @@ export default function Home(): JSX.Element {
   } = useInfiniteQuery(
     'images',
     getImages,
-    {
-      getNextPageParam,
-    }
+    { getNextPageParam }
     // TODO AXIOS REQUEST WITH PARAM
 
     // TODO GET AND RETURN NEXT PAGE PARAM
@@ -50,49 +56,39 @@ export default function Home(): JSX.Element {
   const formattedData = useMemo(() => {
     // TODO FORMAT AND FLAT DATA ARRAY
 
-    return data?.pages[0].data.map(page => {
-      return {
-        title: page.title,
-        description: page.description,
-        url: page.url,
-        ts: page.ts,
-        id: page.id,
-      };
+    let images = [];
+    data?.pages.map(page => {
+      images = [...images, page.data].flat();
     });
+
+    return images;
   }, [data]);
 
-  // TODO RENDER LOADING SCREEN
+  if (isLoading) {
+    return <Loading />;
+  }
 
-  // TODO RENDER ERROR SCREEN
+  if (isError) {
+    return <Error />;
+  }
 
   return (
     <>
-      {isLoading ? (
-        <Loading />
-      ) : (
-        <>
-          {!isError ? (
-            <>
-              <Header />
-              <Box maxW={1120} px={20} mx="auto" my={20}>
-                <CardList cards={formattedData} />
-                {hasNextPage && (
-                  <Button
-                    type="button"
-                    onClick={() => {
-                      fetchNextPage();
-                    }}
-                  >
-                    {isFetchingNextPage ? 'Carregando' : 'Carregar mais'}
-                  </Button>
-                )}
-              </Box>
-            </>
-          ) : (
-            <Error />
-          )}
-        </>
-      )}
+      <Header />
+      <Box maxW={1120} px={20} mx="auto" my={20}>
+        <CardList cards={formattedData} />
+        {hasNextPage && (
+          <Button
+            type="button"
+            disabled={isFetchingNextPage}
+            onClick={() => {
+              fetchNextPage();
+            }}
+          >
+            {isFetchingNextPage ? 'Carregando...' : 'Carregar mais'}
+          </Button>
+        )}
+      </Box>
     </>
   );
 }
